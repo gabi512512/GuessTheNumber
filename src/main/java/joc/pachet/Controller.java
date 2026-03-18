@@ -28,16 +28,22 @@ public class Controller {
 	// states
 	// init - initializat
 	// clim - limite modificate
-	// flim - fail limite
 	// gues - ghicit
 	// fail - failed
 	// save - salvat
 	// svow - salvat dupa over-write
 	// ldsf - reload cu succes
-	// ldfl - reload fail
 	// sphc - save path changed
+	
+	// errors
+	// flim - fail limits
+	// elim - empty limits
+	// ldfl - reload fail
 	// sphf - save path fail
 	// sfch - save fail cheater
+	// nfex - number format exception
+	
+	// cheats
 	// snca - show number cheat activated
 	// sncd - show number cheat deactivated
 	
@@ -123,14 +129,14 @@ public class Controller {
 		Text sufix = new Text();
 		prefix.textProperty().bind(Bindings.createStringBinding(() -> {
 			switch(this.getState()) {
-				case "init", "clim", "flim", "save", "svow", "ldsf", "gues", "fail", "sphc":
-					prefix.setFill(Color.BEIGE);
+				case "init", "clim", "save", "svow", "ldsf", "gues", "fail", "sphc":
+					prefix.setFill(Color.DARKORCHID);
 					return template_status;
-				case "ldfl", "sfch", "sphf":
+				case "ldfl", "sfch", "sphf", "nfex", "flim", "elim":
 					prefix.setFill(Color.RED);
 					return template_error;
 				case "snca", "sncd":
-					prefix.setFill(Color.AZURE);
+					prefix.setFill(Color.DARKSEAGREEN);
 					return template_cheat;
 			}
 			return "ceva nu e bine";
@@ -140,7 +146,6 @@ public class Controller {
 				// state-uri
 				case "init": return " initializat";
 				case "clim": return " limite schimbate";
-				case "flim": return " limite eronate";
 				case "save": return " progres salvat";
 				case "svow": return " progres suprascris";
 				case "ldsf": return " progres reluat";
@@ -148,9 +153,12 @@ public class Controller {
 				case "fail": return " n-ai ghicit";
 				case "sphc": return " save path schimbat";
 				// erori
+				case "flim": return " limite eronate";
+				case "elim": return " ambele campuri goale";
 				case "ldfl": return " nu s-a putut relua progresul";
 				case "sfch": return " nu poti salva deoarece ai folosit coduri";
 				case "sphf": return " nu ai selectat un folder valid";
+				case "nfex": return " nu ai introdus un numar valid";
 				// cheats
 				case "snca": return " acum vei vedea numerele aleatorii";
 				case "sncd": return " acum nu vei mai vedea numerele aleatorii";
@@ -165,18 +173,22 @@ public class Controller {
 	@FXML
 	private void handleTryButton() {
 		System.out.println(try_button.getText());
-		
-		int number =  Integer.parseInt(try_field.getText());
-		if(number == g.getNumber()) {
-			g.guessed();
-			this.setState("gues");
-			if(g.showNumberState())
-				this.showNumber_label.setText("[Cheat] Numar: " + g.getNumber());
+		try {
+			int number =  Integer.parseInt(try_field.getText());
+			if(number == g.getNumber()) {
+				g.guessed();
+				this.setState("gues");
+				if(g.showNumberState())
+					this.showNumber_label.setText("[Cheat] Numar: " + g.getNumber());
+			}
+			else {
+				g.failed();
+				if(this.getState() != "fail") // sa nu se actualizeze inutil label-ul
+					this.setState("fail");
+			}
 		}
-		else {
-			g.failed();
-			if(this.getState() != "fail") // sa nu se actualizeze inutil label-ul
-				this.setState("fail");
+		catch(NumberFormatException ex) {
+			this.setState("nfex");
 		}
 	}
 	
@@ -205,7 +217,7 @@ public class Controller {
 	}
 	
 	@FXML
-	private void handleChangeButton() throws RuntimeException {
+	private void handleChangeButton() {
 		System.out.println(change_button.getText());
 		
 		Dialog<ButtonType> limits_dialog = new Dialog<>();
@@ -234,7 +246,6 @@ public class Controller {
 						valMax = Integer.parseInt(valMax_field.getText());
 						if(valMin >= valMax) {
 							this.setState("flim");
-							throw new RuntimeException("Limita inferioara mai mare sau egala cu cea superioara");
 						}
 						else {
 							g.setValMin(valMin);
@@ -247,7 +258,6 @@ public class Controller {
 						valMin = Integer.parseInt(valMin_field.getText());
 						if(valMin > g.getValMax()) {
 							this.setState("flim");
-							throw new RuntimeException("Limita inferioara mai mare sau egala cu cea superioara");
 						}
 						else {
 							g.setValMin(valMin);
@@ -259,7 +269,6 @@ public class Controller {
 						valMax = Integer.parseInt(valMax_field.getText());
 						if(valMax < g.getValMin()) {
 							this.setState("flim");
-							throw new RuntimeException("Limita inferioara mai mare sau egala cu cea superioara");
 						}
 						else {
 							g.setValMax(valMax);
@@ -270,15 +279,10 @@ public class Controller {
 							this.showNumber_label.setText("[Cheat] Numar: " + g.getNumber());
 					}
 					else
-						throw new RuntimeException("Ambele campuri libere in dialog!");
+						this.setState("elim");
 				}
 				catch(NumberFormatException ex) {
-					System.out.println("NumberFormatException: " + ex.getMessage());
-					//ex.printStackTrace();
-				}
-				catch(RuntimeException ex) {
-					System.out.println(ex.getMessage());
-					//ex.printStackTrace();
+					this.setState("nfex");
 				}
 				System.out.println("Dialog OK");
 			}
