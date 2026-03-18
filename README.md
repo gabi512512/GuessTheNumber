@@ -21,6 +21,9 @@ A little game in which you have to guess a random number between two selected li
 **Warning**: If you activate a cheat you can't save anymore.
 The number will be crypted in the save files to avoid non-fair saves (the encryption is very easy to reach in the source code, but please don't do it :) )
 
+## GUI Screenshot
+![Screenshot of the game](screenshots/screenshot.png)
+
 ## Features:
 - Variable range
 - Saving progress
