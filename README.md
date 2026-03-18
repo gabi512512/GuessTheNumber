@@ -7,7 +7,7 @@ A little game in which you have to guess a random number between two selected li
 
 **Guess button**: press it after you type a number in the text field
 
-**Change boundaries button**: If you want a easier difficulty or harder you can change the boundaries in which the random number will be generated
+**Change boundaries button**: If you want an easier or harder difficulty you can change the boundaries in which the random number will be generated
 
 **Save button**: You can save the game statistics, you enter your name in the pop-up dialog (default folder for the saves will be your Documents folder, you can also change it as you like it)
 
