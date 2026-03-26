@@ -7,28 +7,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
-
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.control.TextInputDialog;
 
-public class GameData {
-	private static final byte[] cheie = "GabiECamSmecher1".getBytes(); // parola 16 octeti
-	private static final SecretKeySpec cheie_secreta = new SecretKeySpec(cheie, "AES");
-	
+public class GameData {	
 	private String path = System.getProperty("user.home") + "/Documents/";
 	private int number;
 	private IntegerProperty valMin = new SimpleIntegerProperty();
@@ -38,6 +28,7 @@ public class GameData {
 	private IntegerProperty guessesTotal = new SimpleIntegerProperty();
 	private IntegerProperty dimMax = new SimpleIntegerProperty();
 	private IntegerProperty triesLowest = new SimpleIntegerProperty();
+	private StringProperty language = new SimpleStringProperty();
 	private boolean cheater = false;
 	private boolean showNumberCheat = false;
 	
@@ -60,9 +51,9 @@ public class GameData {
 	public boolean save() {
 		boolean suprascris = false;
 		TextInputDialog dialog_save = new TextInputDialog();
-		dialog_save.setTitle("Save");
-		dialog_save.setHeaderText("");
-		dialog_save.setContentText("Introdu numele: ");
+		dialog_save.setTitle(LanguageManager.get("dialog.save.title"));
+		dialog_save.setHeaderText(null);
+		dialog_save.setContentText(LanguageManager.get("dialog.save_load.content"));
 		Optional<String> rezultat = dialog_save.showAndWait();
 		if(rezultat.isPresent()) {
 			String name = rezultat.get();
@@ -78,7 +69,8 @@ public class GameData {
 				out.println("guessesTotal = " + this.getGuessesTotal());
 				out.println("dimMax = " + this.getDimMax());
 				out.println("triesLowest = " + this.getTriesLowest());
-				out.println("number = " + this.getEncodedNumber(this.number));
+				out.println("number = " + this.getEncodedNumber(String.valueOf(this.number)));
+				out.println("language = " + this.getLanguage());
 				return suprascris;
 			}
 			catch(IOException ex) {
@@ -92,9 +84,9 @@ public class GameData {
 	public boolean load() {
 		TextInputDialog dialog_load = new TextInputDialog();
 		Map<String, String> date = new HashMap<>();
-		dialog_load.setTitle("Load");
-		dialog_load.setHeaderText("");
-		dialog_load.setContentText("Introdu numele: ");
+		dialog_load.setTitle(LanguageManager.get("dialog.load.title"));
+		dialog_load.setHeaderText(null);
+		dialog_load.setContentText(LanguageManager.get("dialog.save_load.content"));
 		Optional<String> rezultat = dialog_load.showAndWait();
 		if(rezultat.isPresent()) {
 			String name = rezultat.get();
@@ -116,8 +108,8 @@ public class GameData {
 					this.setGuessesTotal(Integer.parseInt(date.get("guessesTotal")));
 					this.setDimMax(Integer.parseInt(date.get("dimMax")));
 					this.setTriesLowest(Integer.parseInt(date.get("triesLowest")));
-					this.number = getDecodedNumber(date.get("number"));
-					System.out.println("numar decodat: " + this.number);
+					this.setLanguage(date.get("language"));
+					this.number = Integer.parseInt(getDecodedNumber(date.get("number")));
 					return true;
 				}
 				catch(FileNotFoundException ex) {
@@ -132,75 +124,14 @@ public class GameData {
 		return false;
 	}
 	
-	// criptare numar actual
-	public String getEncodedNumber(int number) {
-		try {
-			ByteBuffer buffer = ByteBuffer.allocate(4); // fac un buffer de octeti si aloc 4 octeti
-			buffer.putInt(number); // pun numarul in buffer
-			byte[] conversie = buffer.array(); // transform continutul buffer-ului intr-un array de octeti
-			
-			Cipher cifru = Cipher.getInstance("AES");
-			cifru.init(Cipher.ENCRYPT_MODE, cheie_secreta);
-			byte[] conversieCriptata = cifru.doFinal(conversie);
-			String rezultat = Base64.getEncoder().encodeToString(conversieCriptata);
-			
-			return rezultat;
-		}
-		catch(NoSuchAlgorithmException ex) {
-			System.out.println("Eroare: algortim de generare chei inexistent");
-			System.exit(1);
-		}
-		catch(NoSuchPaddingException ex) {
-			System.out.println("Eroare: padding inexistent");
-			System.exit(1);
-		}
-		catch(BadPaddingException ex) {
-			System.out.println("Eroare: padding prost");
-			System.exit(1);
-		}
-		catch(IllegalBlockSizeException ex) {
-			System.out.println("Eroare: dimensiune bloc ilegala");
-			System.exit(1);
-		}
-		catch(InvalidKeyException ex) {
-			System.out.println("Eroare: Cheie invalida");
-			System.exit(1);
-		}
-		return "ceva nu e bine la criptare";
+	// codare numar actual
+	public String getEncodedNumber(String number) {
+		return Base64.getEncoder().encodeToString(number.getBytes());
 	}
 	
-	public int getDecodedNumber(String secret) {
-		try {
-			byte[] conversieCriptata = Base64.getDecoder().decode(secret);
-			Cipher cifru = Cipher.getInstance("AES");
-			cifru.init(Cipher.DECRYPT_MODE, cheie_secreta);
-			byte[] conversie = cifru.doFinal(conversieCriptata);
-			
-			ByteBuffer buffer = ByteBuffer.wrap(conversie);
-			
-			return buffer.getInt();
-		}
-		catch(InvalidKeyException ex) {
-			System.out.println("Eroare: cheie invalida");
-			System.exit(1);
-		}
-		catch(NoSuchAlgorithmException ex) {
-			System.out.println("Eroare: algortim de generare chei inexistent");
-			System.exit(1);
-		}
-		catch(NoSuchPaddingException ex) {
-			System.out.println("Eroare: padding inexistent");
-			System.exit(1);
-		}
-		catch(BadPaddingException ex) {
-			System.out.println("Eroare: padding prost");
-			System.exit(1);
-		}
-		catch(IllegalBlockSizeException ex) {
-			System.out.println("Eroare: dimensiune bloc ilegala");
-			System.exit(1);
-		}
-		return 0;
+	// decodare numar actual
+	public String getDecodedNumber(String secret) {
+		return new String(Base64.getDecoder().decode(secret));
 	}
 	
 	// gettere valori primitive
@@ -227,6 +158,9 @@ public class GameData {
 	}
 	public int getTriesLowest() {
 		return this.triesLowest.get();
+	}
+	public String getLanguage() {
+		return this.language.get();
 	}
 	public boolean showNumberState() {
 		return this.showNumberCheat;
@@ -269,6 +203,9 @@ public class GameData {
 	public void setShowNumberCheat(boolean showNumberCheat) {
 		this.showNumberCheat = showNumberCheat;
 	}
+	public void setLanguage(String language) {
+		this.language.set(language);
+	}
 	
 	// gettere proprietati
 	public IntegerProperty getValMinProperty() {
@@ -291,5 +228,8 @@ public class GameData {
 	}
 	public IntegerProperty getTriesLowestProperty() {
 		return this.triesLowest;
+	}
+	public StringProperty getLanguageProperty() {
+		return this.language;
 	}
 }

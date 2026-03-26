@@ -11,7 +11,7 @@ public class GUI extends Application {
 	public void start(Stage stage) throws Exception {
 		Parent interfataGrafica = FXMLLoader.load(getClass().getResource("/gui/gui.fxml"));
 		Scene scena = new Scene(interfataGrafica);
-		stage.setTitle("Guess the number");
+		stage.setTitle(LanguageManager.get("title"));
 		stage.setScene(scena);
 		stage.show();
 	}
